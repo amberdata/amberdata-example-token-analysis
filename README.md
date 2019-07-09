@@ -32,6 +32,14 @@ $ npm run item3 -- <Token_Address>
 $ npm run item3b -- <Token_Address> <Whale_Threshold>
 $ npm run item3 -- 0xb8c77482e45f1f44de1745f52c74426c631bdd52
 $ npm run item3b -- 0xb8c77482e45f1f44de1745f52c74426c631bdd52 1000000
+
+# 6. Whale Percentages:
+$ npm run item6 -- <Token_Address> <Whale_Threshold> <USD_Threshold>
+$ npm run item6 -- 0xb8c77482e45f1f44de1745f52c74426c631bdd52 1000000 1000000
+
+# 7. Related Token Holdings:
+$ npm run item7 -- <Token_Address> <Holdings_Threshold>
+$ npm run item7 -- 0xb8c77482e45f1f44de1745f52c74426c631bdd52 5
 ```
 
 ## Example BNB Research:
@@ -68,7 +76,7 @@ npm run item3b -- 0xb8c77482e45f1f44de1745f52c74426c631bdd52 1000000
 ```
 
 #### 4. How long do they hold my tokens?
-- This would be a summation of #5, which requires iteration of all token holders
+- This will be a summation of #5, which requires iteration of all token holders
 
 Run the following code:
 ```
@@ -95,7 +103,7 @@ npm run item6 -- <Token_Address> <Whale_Threshold> <USD_Threshold>
 npm run item6 -- 0xb8c77482e45f1f44de1745f52c74426c631bdd52 1000000 1000000
 ```
 
-#### 6. What other tokens are my users holding?
+#### 7. What other tokens are my users holding?
 - Base URL: https://web3api.io/api/v1/addresses/:hash/tokens
 - Filters out by amount specified (in this example 18)
 - NOTE: Takes a while for addresses with large amounts of holders, for a full percentage report. This also builds multiple reports with different filters allowing introspection against different validity parameters.
