@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>6_whale_percentages</title>
+</head>
+<body>
+  <!-- Styles -->
+<style>
+#chart1 {
+  width: 100%;
+  height: 100vh;
+}
+
+</style>
+
+<!-- Resources -->
+<script src="https://www.amcharts.com/lib/4/core.js"></script>
+<script src="https://www.amcharts.com/lib/4/charts.js"></script>
+<script src="https://www.amcharts.com/lib/4/themes/animated.js"></script>
+
+<!-- Chart code -->
+<script>
+am4core.ready(function() {
+
+    // Themes begin
+  am4core.useTheme(am4themes_animated);
+  // Themes end
+
+  // Create chart instance
+  var chart = am4core.create("chart1", am4charts.PieChart);
+
+  // Let's cut a hole in our Pie chart the size of 40% the radius
+  chart.innerRadius = am4core.percent(40);
+
+  // Add data
+  chart.data = FULL_CHART_DATA;
+
+  // Add and configure Series
+  var pieSeries = chart.series.push(new am4charts.PieSeries());
+  pieSeries.dataFields.value = "amountTokensPercent";
+  pieSeries.dataFields.category = "address";
+  pieSeries.slices.template.stroke = am4core.color("#fff");
+  pieSeries.slices.template.strokeWidth = 2;
+  pieSeries.slices.template.strokeOpacity = 1;
+
+  // Disabling labels and ticks on inner circle
+  pieSeries.labels.template.disabled = true;
+  pieSeries.ticks.template.disabled = true;
+
+  // Disable sliding out of slices
+  pieSeries.slices.template.states.getKey("hover").properties.shiftRadius = 0;
+  pieSeries.slices.template.states.getKey("hover").properties.scale = 0.9;
+
+  // Add second series
+  var pieSeries2 = chart.series.push(new am4charts.PieSeries());
+  pieSeries2.dataFields.value = "amountUsdPercent";
+  pieSeries2.dataFields.category = "address";
+  pieSeries2.slices.template.stroke = am4core.color("#fff");
+  pieSeries2.slices.template.strokeWidth = 2;
+  pieSeries2.slices.template.strokeOpacity = 1;
+  pieSeries2.slices.template.states.getKey("hover").properties.shiftRadius = 0;
+  pieSeries2.slices.template.states.getKey("hover").properties.scale = 1.1;
+
+}); // end am4core.ready()
+</script>
+
+<!-- HTML -->
+<div id="chart1"></div>
+</body>
+</html>

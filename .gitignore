@@ -1,0 +1,29 @@
+.DS_Store
+.bak
+node_modules/
+output/
+output
+output/**
+build/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+test/unit/coverage
+test/e2e/reports
+test/snapshots
+report.*
+
+# Editor directories and files
+.idea
+.badidea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# The stuff we don't like, or prefer to hide from people, or are downright unhelpful
+.*
+.*/
+!/.gitignore
+!/.eslintignore

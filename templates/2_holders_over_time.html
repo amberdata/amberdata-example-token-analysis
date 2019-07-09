@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>2_holders_over_time</title>
+</head>
+<body>
+  <!-- Styles -->
+<style>
+#chartsupply,
+#chartholders {
+  width: 100%;
+  height: 50vh;
+}
+
+</style>
+
+<!-- Resources -->
+<script src="https://www.amcharts.com/lib/4/core.js"></script>
+<script src="https://www.amcharts.com/lib/4/charts.js"></script>
+<script src="https://www.amcharts.com/lib/4/themes/animated.js"></script>
+
+<!-- Chart code -->
+<script>
+am4core.ready(function() {
+
+  // Themes begin
+  am4core.useTheme(am4themes_animated);
+  // Themes end
+
+  const allData = FULL_CHART_DATA;
+
+  // Create chart
+  var chart = am4core.create("chartsupply", am4charts.XYChart);
+  chart.paddingRight = 20;
+
+  chart.data = allData;
+
+  var chart2 = am4core.create("chartholders", am4charts.XYChart);
+  chart2.paddingRight = 20;
+  chart2.data = allData;
+
+  var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+  dateAxis.baseInterval = { "timeUnit": "minute", "count": 1 };
+  dateAxis.tooltipDateFormat = "HH:mm, d MMMM";
+
+  var dateAxis2 = chart2.xAxes.push(new am4charts.DateAxis());
+  dateAxis2.baseInterval = { "timeUnit": "minute", "count": 1 };
+  dateAxis2.tooltipDateFormat = "HH:mm, d MMMM";
+
+  var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+  valueAxis.tooltip.disabled = true;
+  valueAxis.title.text = "Supply";
+  valueAxis.renderer.grid.template.strokeDasharray = "2,3";
+  valueAxis.renderer.labels.template.fill = am4core.color("#dfcc64");
+  valueAxis.renderer.minWidth = 60;
+
+  var valueAxis2 = chart2.yAxes.push(new am4charts.ValueAxis());
+  valueAxis2.tooltip.disabled = true;
+  valueAxis2.title.text = "Unique holders";
+
+  var series = chart2.series.push(new am4charts.LineSeries());
+  series.dataFields.dateX = "date";
+  series.dataFields.valueY = "holders";
+  series.tooltipText = "Holders: [bold]{valueY}[/]";
+  series.fillOpacity = 0.3;
+
+  var series2 = chart.series.push(new am4charts.LineSeries());
+  series2.dataFields.dateX = "date";
+  series2.dataFields.valueY = "circulating";
+  series2.tooltipText = "Circulating Supply: [bold]{valueY}[/]";
+  series2.fillOpacity = 0.3;
+  // series2.stacked = true;
+  var series3 = chart.series.push(new am4charts.LineSeries());
+  series3.dataFields.dateX = "date";
+  series3.dataFields.valueY = "total";
+  series3.tooltipText = "Total Supply: [bold]{valueY}[/]";
+  series3.fillOpacity = 0.3;
+  // series3.stacked = true;
+
+  chart.cursor = new am4charts.XYCursor();
+  chart.cursor.lineY.opacity = 0;
+  chart.scrollbarX = new am4charts.XYChartScrollbar();
+  chart.scrollbarX.series.push(series2);
+  chart.scrollbarX.series.push(series3);
+
+  chart2.cursor = new am4charts.XYCursor();
+  chart2.cursor.lineY.opacity = 0;
+  chart2.scrollbarX = new am4charts.XYChartScrollbar();
+  chart2.scrollbarX.series.push(series);
+
+}); // end am4core.ready()
+</script>
+
+<!-- HTML -->
+<div id="chartsupply"></div>
+<div id="chartholders"></div>
+</body>
+</html>

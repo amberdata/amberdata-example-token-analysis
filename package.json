@@ -1,0 +1,22 @@
+{
+  "name": "amberdata-example-token-analysis",
+  "version": "1.0.0",
+  "description": "A set of scripts to understand core usage for a given address.",
+  "scripts": {
+    "t": "node ./scripts/test.js",
+    "item1": "node ./scripts/1_total_holders.js",
+    "item2": "node ./scripts/2_holders_over_time.js",
+    "item3": "node ./scripts/3a_average_holdings.js",
+    "item3b": "node ./scripts/3b_average_holdings.js",
+    "item6": "node ./scripts/6_whale_percentages.js",
+    "item7": "node ./scripts/7_related_holdings.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "@trevorjtclarke",
+  "license": "Apache 2.0",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "big.js": "^5.2.2",
+    "moment": "^2.24.0"
+  }
+}
