@@ -15,7 +15,7 @@ const TOKEN_HOLDING_THRESHOLD = args[3] ? parseInt(args[3], 10) : 5
 const sizeTotal = 1000
 let DECIMALS = 1e18
 // Used in case we need to start at diff place in CSV
-let HOLDER_START_INDEX = 1
+let HOLDER_START_INDEX = 0
 let RETRY_INDEX = 0
 const relatedMapUniques = new Map()
 const relatedMapTradeableTokenUniques = new Map()
@@ -42,12 +42,12 @@ if (!fs.existsSync(dataOutputCsv)) {
 
 const confirmFilesExist = async () => {
   if (!fs.existsSync(outputDir)) await fs.mkdirSync(outputDir)
-  if (!fs.existsSync(sortedUniquesJson)) await fs.writeFile(sortedUniquesJson, JSON.stringify([]), 'utf8', () => {})
-  if (!fs.existsSync(sortedTokensJson)) await fs.writeFile(sortedTokensJson, JSON.stringify([]), 'utf8', () => {})
-  if (!fs.existsSync(sortedTradableTokensJson)) await fs.writeFile(sortedTradableTokensJson, JSON.stringify([]), 'utf8', () => {})
-  if (!fs.existsSync(sortedTradableTokenUniquesJson)) await fs.writeFile(sortedTradableTokenUniquesJson, JSON.stringify([]), 'utf8', () => {})
-  if (!fs.existsSync(snapshotLastPoint)) await fs.writeFile(snapshotLastPoint, JSON.stringify({key:1}), 'utf8', () => {})
-  if (!fs.existsSync(largeAddressCsv)) await fs.writeFile(largeAddressCsv, '', 'utf8', () => {})
+  if (!fs.existsSync(sortedUniquesJson)) await fs.writeFileSync(sortedUniquesJson, JSON.stringify([]), 'utf8', () => {})
+  if (!fs.existsSync(sortedTokensJson)) await fs.writeFileSync(sortedTokensJson, JSON.stringify([]), 'utf8', () => {})
+  if (!fs.existsSync(sortedTradableTokensJson)) await fs.writeFileSync(sortedTradableTokensJson, JSON.stringify([]), 'utf8', () => {})
+  if (!fs.existsSync(sortedTradableTokenUniquesJson)) await fs.writeFileSync(sortedTradableTokenUniquesJson, JSON.stringify([]), 'utf8', () => {})
+  if (!fs.existsSync(snapshotLastPoint)) await fs.writeFileSync(snapshotLastPoint, JSON.stringify({key:0}), 'utf8', () => {})
+  if (!fs.existsSync(largeAddressCsv)) await fs.writeFileSync(largeAddressCsv, '', 'utf8', () => {})
 }
 
 const options = {
@@ -98,33 +98,35 @@ const getRelatedTokensByHash = (hash, params) => {
 const addLargeTokenHolderToList = async (address, total) => {
   let file = await fs.readFileSync(largeAddressCsv)
   file = file.toString() + `${address},${total}\n`
-  await fs.writeFile(largeAddressCsv, file, 'utf8', () => {
+  await fs.writeFileSync(largeAddressCsv, file, 'utf8', () => {
     console.log('updated largeAddressCsv:', address)
   })
 }
 
 const saveStartFile = async key => {
   const data = JSON.stringify({ key })
-  await fs.writeFile(snapshotLastPoint, data, 'utf8', () => {
+  await fs.writeFileSync(snapshotLastPoint, data, 'utf8', () => {
     // console.log('updated snapshotLastPoint:', data)
   })
 }
 
 const loadStartFile = async () => {
-  const file = await fs.readFileSync(snapshotLastPoint)
   try {
+    const file = await fs.readFileSync(snapshotLastPoint)
     const f = file.toString()
     if (!f || f.length <= 1) {
       HOLDER_START_INDEX = 1
-      return
+      return HOLDER_START_INDEX
     }
     const d = JSON.parse(f)
-    if (!d || !d.key) HOLDER_START_INDEX = 1
-    else HOLDER_START_INDEX = d.key
-    // console.log('HOLDER_START_INDEX', HOLDER_START_INDEX)
+    if (!d || !d.key && !HOLDER_START_INDEX) HOLDER_START_INDEX = 1
+    else HOLDER_START_INDEX = d.key + 1
+    console.log('HOLDER_START_INDEX', HOLDER_START_INDEX)
   } catch (e) {
     console.log('loadStartFile', e)
   }
+
+  return HOLDER_START_INDEX
 }
 
 const loadFileToMap = async (mapItem, filePath) => {
@@ -159,36 +161,50 @@ const loadAllFiles = async () => {
   console.log('-------------------------\n  LOADED FILES\n-------------------------\n')
 }
 
-const getAllData = async () => {
+const getAllData = async (startIdx) => {
   // Open compiled file for averages, then get related token holdings
   const csvfile = await fs.readFileSync(dataOutputCsv)
   const records = csvfile.toString().split('\n')
+  let errorOccurred = false
 
   // Load previous starting point, if any
-  await loadStartFile()
-  console.log('HOLDER_START_INDEX', HOLDER_START_INDEX)
+  if (startIdx) HOLDER_START_INDEX = startIdx
+
+  const fireRetry = async (idx) => {
+    if (RETRY_INDEX > 3) {
+      console.log('FAILED ALL RETRY ATTEMPTS - EXITING')
+      return
+    }
+    errorOccurred = true
+    await saveStartFile(idx - 1)
+    HOLDER_START_INDEX = idx
+    console.log('ATTEMPTING RETRY ----', HOLDER_START_INDEX)
+    RETRY_INDEX++
+    return getAllData(idx)
+  }
 
   // skip first line in CSV
   for (var i = HOLDER_START_INDEX; i < records.length; i++) {
-    // for (var i = HOLDER_START_INDEX; i < 25; i++) {
     const item = records[i].split(',')
     const address = item[0]
     let allTokens
-    // = await getRelatedTokensByHash(address, { size: sizeTotal, includePrice: true })
 
     try {
       allTokens = await getRelatedTokensByHash(address, { size: sizeTotal, includePrice: true })
+      if (!allTokens || typeof allTokens.totalRecords === 'undefined') {
+        await fireRetry(i)
+        break;
+        return;
+      }
       const t = allTokens && allTokens.totalRecords ? allTokens.totalRecords : allTokens.records.length
       const percentComplete = Math.round(i / records.length * 100)
-      console.log(`Processing: ${address}, holding: ${t} - ${percentComplete}% ${i} / ${records.length}`)
+      console.log(`Processing: ${address}, ${percentComplete}% ${i} / ${records.length}, holding: ${t}`)
     } catch (e) {
-      saveStartFile(i)
-      if (RETRY_INDEX > 3) return
-      console.log('ATTEMPTING RETRY ----')
-      RETRY_INDEX++
-      getAllData()
+      await fireRetry(i)
+      break;
+      return;
     }
-    saveStartFile(i)
+    await saveStartFile(i)
 
     // if we have a large holder, need to keep track:
     if (parseInt(allTokens.totalRecords, 10) >= sizeTotal) await addLargeTokenHolderToList(address, allTokens.totalRecords)
@@ -225,7 +241,6 @@ const getAllData = async () => {
         }
 
         // track meta for display later
-        // if (!relatedMapTokenMeta.has(t.address))
         relatedMapTokenMeta.set(t.address, t)
       }
     })
@@ -233,37 +248,38 @@ const getAllData = async () => {
     // Save after every request, just to be safe
     // Sorted unique Token totals
     const sortedUniques = getSortedAndFilteredDataWithMeta(relatedMapUniques.entries())
-    await fs.writeFile(sortedUniquesJson, JSON.stringify(sortedUniques), 'utf8', () => {
+    await fs.writeFileSync(sortedUniquesJson, JSON.stringify(sortedUniques), 'utf8', () => {
       // console.log('updated sortedUniquesJson:', sortedUniques.length)
     })
 
     // Sorted unique Token totals
     const sortedTokens = getSortedAndFilteredDataWithMeta(relatedMapTokens.entries())
-    await fs.writeFile(sortedTokensJson, JSON.stringify(sortedTokens), 'utf8', () => {
+    await fs.writeFileSync(sortedTokensJson, JSON.stringify(sortedTokens), 'utf8', () => {
       // console.log('updated sortedTokensJson:', sortedTokens.length)
     })
 
     // Sorted unique Token totals
     const sortedTradableTokens = getSortedAndFilteredDataWithMeta(relatedMapTradeableTokens.entries())
-    await fs.writeFile(sortedTradableTokensJson, JSON.stringify(sortedTradableTokens), 'utf8', () => {
+    await fs.writeFileSync(sortedTradableTokensJson, JSON.stringify(sortedTradableTokens), 'utf8', () => {
       // console.log('updated sortedTradableTokensJson:', sortedTradableTokens.length)
     })
 
     // Sorted Tradable Tokens
     const sortedTradableTokenUniques = getSortedAndFilteredDataWithMeta(relatedMapTradeableTokenUniques.entries())
-    await fs.writeFile(sortedTradableTokenUniquesJson, JSON.stringify(sortedTradableTokenUniques), 'utf8', () => {
+    await fs.writeFileSync(sortedTradableTokenUniquesJson, JSON.stringify(sortedTradableTokenUniques), 'utf8', () => {
       // console.log('updated sortedTradableTokenUniquesJson:', sortedTradableTokenUniques.length)
     })
   }
 
-  console.log('-------------------------------\n    DONE\n-------------------------------\n')
+  if (!errorOccurred) console.log('-------------------------------\n    DONE\n-------------------------------\n')
 }
 
 const main = async () => {
   await confirmFilesExist()
   await loadAllFiles()
+  const idStart = await loadStartFile()
 
-  getAllData()
+  getAllData(idStart)
 }
 
 main()
