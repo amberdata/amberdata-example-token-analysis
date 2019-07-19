@@ -32,7 +32,7 @@ const getQueryFromObject = obj => {
 // 1. Get circulating & total supply, unique holders, for a given range
 const getHoldersForRangeByHash = (hash, params) => {
   const query = getQueryFromObject(params)
-  const url = `${BASE_URL}/tokens/${hash}/supplies/historical${query}`
+  const url = `${BASE_URL}/tokens/${hash}/supplies/historical${query}timeFormat=iso`
 
   return axios.get(url, options).then(res => {
     return res.data.payload.data
@@ -80,7 +80,11 @@ const getAllData = async () => {
   const templatePath = path.join(__dirname, '../templates', '2_holders_over_time.html')
   const templatePathOutput = path.join(outputDir, '2_holders_over_time.html')
   const dataOutputJson = path.join(outputDir, '2_holders_over_time.json')
-  const outputData = JSON.stringify(finalData)
+  const outputData = JSON.stringify(finalData.sort((a, b) => {
+      if (a.date < b.date) return 1
+      if (a.date > b.date) return -1
+      return 0
+  }))
 
   if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir)
 

@@ -16,7 +16,7 @@ const sizeTotal = 1000
 let DECIMALS = 1e18
 let COMPUTED_SUM = new Big(0)
 let COMPUTED_AVERAGE = new Big(0)
-const SHOW_WHALES = args[3] ? false : true
+const SHOW_WHALES = args[4] || true
 let WHALE_THRESHOLD = args[3] ? parseInt(args[3], 10) : 1000000
 let TOTAL_HOLDERS = 0
 
