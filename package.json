@@ -15,7 +15,7 @@
   "author": "@trevorjtclarke",
   "license": "Apache 2.0",
   "dependencies": {
-    "axios": "^0.19.0",
+    "axios": "^0.21.1",
     "big.js": "^5.2.2",
     "moment": "^2.24.0"
   }
